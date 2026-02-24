@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Крестики-нолики</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f0f0; font-family: sans-serif; }
+        canvas { border: 5px solid #333; background: white; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        button { margin-top: 20px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="300" height="300"></canvas>
+    <button onclick="location.reload()">Играть снова</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const size = 300;
+        const cell = size / 3;
+        
+        let isXNext = true;
+        let gameActive = true;
+        const board = Array(9).fill(null);
+
+        function drawGrid() {
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 4;
+            for (let i = 1; i < 3; i++) {
+                ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, size); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(size, i * cell); ctx.stroke();
+            }
+        }
+
+        function drawX(x, y) {
+            const pad = 25;
+            ctx.strokeStyle = '#ff4d4d';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(x + pad, y + pad); ctx.lineTo(x + cell - pad, y + cell - pad);
+            ctx.moveTo(x + cell - pad, y + pad); ctx.lineTo(x + pad, y + cell - pad);
+            ctx.stroke();
+        }
+
+        function drawO(x, y) {
+            const pad = 25;
+            ctx.strokeStyle = '#4da6ff';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(x + cell/2, y + cell/2, cell/2 - pad, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        function drawWinLine(pattern) {
+            const start = pattern[0];
+            const end = pattern[2];
+            
+            const x1 = (start % 3) * cell + cell/2;
+            const y1 = Math.floor(start / 3) * cell + cell/2;
+            const x2 = (end % 3) * cell + cell/2;
+            const y2 = Math.floor(end / 3) * cell + cell/2;
+
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+
+        function checkWinner() {
+            const winPatterns = [
+                [0,1,2], [3,4,5], [6,7,8], // горизонтали
+                [0,3,6], [1,4,7], [2,5,8], // вертикали
+                [0,4,8], [2,4,6]             // диагонали
+            ];
+
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    drawWinLine(pattern);
+                    return board[a];
+                }
+            }
+            return board.includes(null) ? null : 'Ничья';
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (!gameActive) return; // Блокировка кликов
+
+            const rect = canvas.getBoundingClientRect();
+            const col = Math.floor((e.clientX - rect.left) / cell);
+            const row = Math.floor((e.clientY - rect.top) / cell);
+            const index = row * 3 + col;
+
+            if (board[index] === null) {
+                const x = col * cell;
+                const y = row * cell;
+
+                if (isXNext) {
+                    drawX(x, y);
+                    board[index] = 'X';
+                } else {
+                    drawO(x, y);
+                    board[index] = 'O';
+                }
+
+                const result = checkWinner();
+                if (result) {
+                    gameActive = false;
+                    setTimeout(() => alert(result === 'Ничья' ? 'Ничья!' : `Победили ${result}!`), 50);
+                }
+                
+                isXNext = !isXNext;
+            }
+        });
+
+        drawGrid();
+    </script>
+</body>
+</html>
